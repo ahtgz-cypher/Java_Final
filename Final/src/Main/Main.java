@@ -1,10 +1,10 @@
-package main;
+package Main;
 
-import ui.LoginPage;
+import ui.login;
 import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoginPage());
+        SwingUtilities.invokeLater(() -> new login());
     }
 }
