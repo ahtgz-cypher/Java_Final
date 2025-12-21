@@ -22,7 +22,7 @@ import java.util.List;
  * 
  * Lưu ý: Dữ liệu được lưu trực tiếp vào MySQL database thông qua DBConnection
  */
-public class AdminMainFrame extends JFrame {
+public class adminPage extends JFrame {
     
     // ==================== CÁC THÀNH PHẦN GIAO DIỆN ====================
     private JPanel mainPanel;              // Panel chính chứa các card
@@ -37,7 +37,7 @@ public class AdminMainFrame extends JFrame {
     /**
      * Constructor - Khởi tạo cửa sổ Admin
      */
-    public AdminMainFrame() {
+    public adminPage() {
         initializeUI();
     }
     

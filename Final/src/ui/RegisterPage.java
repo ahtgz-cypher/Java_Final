@@ -125,7 +125,7 @@ public class RegisterPage extends JFrame {
 	}
 
 	private void backToLogin() {
-		new LoginPage();
+		new login();
 		dispose();
 	}
 }

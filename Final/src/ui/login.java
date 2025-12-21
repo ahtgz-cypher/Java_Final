@@ -6,6 +6,8 @@ import util.ValidationUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
+import ui.admin.adminPage; 
+
 
 public class login extends JFrame {
 	private JTextField txtUsername;
@@ -18,7 +20,7 @@ public class login extends JFrame {
 	}
 
 	private void initUI() {
-		setTitle("Hệ Thống Quản Lí Sinh Viên - Đăng Nhập");
+		setTitle("Đăng Nhập");
 		setSize(400, 350);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -134,7 +136,7 @@ public class login extends JFrame {
 	private void openDashboardByRole(User user) {
 		switch (user.getRoleId()) {
 		case 1: // ADMIN
-			new AdminPage(user);
+			new adminPage(user);
 			break;
 		case 2: // TEACHER
 			new TeacherPage(user);
@@ -158,6 +160,6 @@ public class login extends JFrame {
 	}
 
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(LoginPage::new);
+		SwingUtilities.invokeLater(login::new);
 	}
 }
