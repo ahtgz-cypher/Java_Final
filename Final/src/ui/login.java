@@ -2,6 +2,7 @@ package ui;
 
 import model.User;
 import dao.UserDAO;
+import dao.TeacherDAO;
 import util.ValidationUtil;
 import javax.swing.*;
 import java.awt.*;
@@ -136,13 +137,20 @@ public class login extends JFrame {
 	private void openDashboardByRole(User user) {
 		switch (user.getRoleId()) {
 		case 1: // ADMIN
-			new adminPage(user);
+			adminPage admin = new adminPage();
+			admin.setVisible(true);
 			break;
 		case 2: // TEACHER
-			new TeacherPage(user);
+			// Lấy thông tin giáo viên
+			int teacherId = TeacherDAO.getTeacherIdByUserId(user.getUserId());
+			String teacherName = TeacherDAO.getTeacherNameByUserId(user.getUserId());
+			
+			// Mở trang giáo viên
+			TeacherPage teacherPage = new TeacherPage(teacherName, teacherId);
+			teacherPage.setVisible(true);
 			break;
 		case 3: // STUDENT
-			new StudentPage(user);
+			JOptionPane.showMessageDialog(this, "Trang sinh viên đang được phát triển!");
 			break;
 		default:
 			JOptionPane.showMessageDialog(this, "Role không hợp lệ!");

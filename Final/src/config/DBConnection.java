@@ -2,6 +2,7 @@ package config;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DBConnection {
 
@@ -10,8 +11,12 @@ public class DBConnection {
     private static final String USER = "root";
     private static final String PASSWORD = "123456";
 
-    public static Connection getConnection() throws Exception {
-        Class.forName("com.mysql.cj.jdbc.Driver"); // ⭐ QUAN TRỌNG
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+    public static Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver"); 
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL Driver not found", e);
+        }
     }
 }
