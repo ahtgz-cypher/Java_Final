@@ -63,18 +63,49 @@ public class TeacherPage extends JFrame {
         });
     }
     
+    // ===== STYLE WHITE BUTTON =====
+    private void styleWhiteButton(JButton button) {
+        button.setBackground(Color.WHITE);
+        button.setForeground(new Color(52, 73, 94));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199), 1),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        button.setOpaque(true);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Hover effect
+        Color hoverColor = new Color(236, 240, 241);
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverColor);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(Color.WHITE);
+            }
+        });
+    }
+    
     private void initComponents() {
         // Main Panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // ===== TOP PANEL - TÌM KIẾM =====
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        JPanel topPanel = new JPanel(new BorderLayout(15, 10));
         topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(236, 240, 241)),
             BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
+        
+        // Left panel for search
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        leftPanel.setBackground(Color.WHITE);
         
         JLabel searchLabel = new JLabel("Tìm kiếm sinh viên:");
         searchLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -88,14 +119,30 @@ public class TeacherPage extends JFrame {
         ));
         searchField.setPreferredSize(new Dimension(320, 36));
         
-        JButton searchButton = new JButton("Tìm kiếm");
-        JButton refreshButton = new JButton("Làm mới");
+        JButton searchButton = new JButton("↩");
+        JButton refreshButton = new JButton("↻");
+        JButton logoutButton = new JButton("⌂");
         
         // Modern styling
         styleButton(searchButton, new Color(52, 152, 219), new Color(41, 128, 185)); // Blue
         styleButton(refreshButton, new Color(149, 165, 166), new Color(127, 140, 141)); // Gray
-                searchButton.addActionListener(e -> searchStudents());
+        styleButton(logoutButton, new Color(231, 76, 60), new Color(192, 57, 43)); // Red
+
+        searchButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 16));
+        // searchButton.setPreferredSize(new Dimension(50, 35));
+        refreshButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 16));
+        // refreshButton.setPreferredSize(new Dimension(50, 35));
+        logoutButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 16));
+        // logoutButton.setPreferredSize(new Dimension(50, 35));
+
+        // Set tooltip for logout button
+        searchButton.setToolTipText("Tìm kiếm");
+        refreshButton.setToolTipText("Làm mới");
+        logoutButton.setToolTipText("Đăng xuất");
+        
+        searchButton.addActionListener(e -> searchStudents());
         refreshButton.addActionListener(e -> loadAllStudents());
+        logoutButton.addActionListener(e -> logout());
         
         // Thêm Enter key listener cho search field
         searchField.addKeyListener(new KeyAdapter() {
@@ -107,10 +154,18 @@ public class TeacherPage extends JFrame {
             }
         });
         
-        topPanel.add(searchLabel);
-        topPanel.add(searchField);
-        topPanel.add(searchButton);
-        topPanel.add(refreshButton);
+        leftPanel.add(searchLabel);
+        leftPanel.add(searchField);
+        leftPanel.add(searchButton);
+        leftPanel.add(refreshButton);
+        
+        // Right panel for logout
+        JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        logoutPanel.setBackground(Color.WHITE);
+        logoutPanel.add(logoutButton);
+        
+        topPanel.add(leftPanel, BorderLayout.CENTER);
+        topPanel.add(logoutPanel, BorderLayout.EAST);
         
         // ===== CENTER PANEL - DANH SÁCH SINH VIÊN =====
         JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
@@ -264,12 +319,10 @@ public class TeacherPage extends JFrame {
         JButton exportSubjectButton = new JButton("Xuất báo cáo theo môn");
         JButton exportStudentButton = new JButton("Xuất báo cáo sinh viên");
         
-        // Modern styling
-        Color purpleColor = new Color(155, 89, 182);
-        Color purpleHover = new Color(142, 68, 173);
-        styleButton(exportAllButton, purpleColor, purpleHover);
-        styleButton(exportSubjectButton, purpleColor, purpleHover);
-        styleButton(exportStudentButton, purpleColor, purpleHover);
+        // Modern white styling
+        styleWhiteButton(exportAllButton);
+        styleWhiteButton(exportSubjectButton);
+        styleWhiteButton(exportStudentButton);
         
         exportAllButton.addActionListener(e -> exportAllScores());
         exportSubjectButton.addActionListener(e -> exportScoresBySubject());
@@ -332,6 +385,28 @@ public class TeacherPage extends JFrame {
         }
     }
     
+        // ===== ĐĂNG XUẤT =====
+    private void logout() {
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Bạn có chắc chắn muốn đăng xuất?",
+            "Xác nhận đăng xuất",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Đóng cửa sổ hiện tại
+            this.dispose();
+            
+            // Mở lại login page
+            SwingUtilities.invokeLater(() -> {
+                ui.login loginPage = new ui.login();
+                loginPage.setVisible(true);
+            });
+        }
+    }
+
     // ===== TẢI TẤT CẢ SINH VIÊN =====
     private void loadAllStudents() {
         List<Student> students = StudentDAO.getAllStudents();
@@ -370,16 +445,16 @@ public class TeacherPage extends JFrame {
             List<Score> scores = ScoreDAO.getScoresByStudent(studentId);
             
             StringBuilder info = new StringBuilder();
-            info.append("╔════════════════════════════════╗\n");
-            info.append("   THÔNG TIN SINH VIÊN\n");
-            info.append("╚════════════════════════════════╝\n\n");
+            info.append("╔═════════════════════════════════╗\n");
+            info.append("‖       THÔNG TIN SINH VIÊN       ‖\n");
+            info.append("╚═════════════════════════════════╝\n\n");
             info.append("Mã sinh viên: ").append(student.getStudentCode()).append("\n");
             info.append("Họ tên: ").append(student.getFullName()).append("\n");
             info.append("Ngày sinh: ").append(student.getDob()).append("\n\n");
             
-            info.append("╔════════════════════════════════╗\n");
-            info.append("   BẢNG ĐIỂM\n");
-            info.append("╚════════════════════════════════╝\n\n");
+            info.append("╔═════════════════════════════════╗\n");
+            info.append("‖            BẢNG ĐIỂM            ‖\n");
+            info.append("╚═════════════════════════════════╝\n\n");
             
             if (scores.isEmpty()) {
                 info.append("Chưa có điểm.\n");
