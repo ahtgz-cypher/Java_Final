@@ -239,8 +239,27 @@ public class ScoreDAO {
         return Optional.empty();
     }
 
- 
+// tổng tc
+     public static int getTotalCredits(int studentId) {
+        String sql = "SELECT COALESCE(SUM(su.credit),0) AS total_credit " +
+                     "FROM scores sc " +
+                     "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                     "WHERE sc.student_id = ?";
 
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, studentId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt("total_credit");
+
+        } catch (SQLException e) {
+            System.err.println("✗ Lỗi tính tổng tín chỉ: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
     
     
 }
