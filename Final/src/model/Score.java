@@ -4,12 +4,14 @@ public class Score {
     private int scoreId;
     private int studentId;
     private int subjectId;
+    private int credit;
     private double score;
     
     // Thông tin mở rộng để hiển thị
     private String studentName;
     private String studentCode;
     private String subjectName;
+    private String teacherName;
     
     public Score(int scoreId, int studentId, int subjectId, double score) {
         this.scoreId = scoreId;
@@ -41,6 +43,10 @@ public class Score {
     public int getSubjectId() {
         return subjectId;
     }
+
+    public int getCredit() {
+        return credit;
+    }
     
     public double getScore() {
         return score;
@@ -57,8 +63,16 @@ public class Score {
     public String getSubjectName() {
         return subjectName;
     }
+
+    public String getTeacherName() {
+        return teacherName;
+    }
     
     // Setters
+    public void setCredit(int credit) {
+        this.credit = credit;
+    }
+    
     public void setScore(double score) {
         this.score = score;
     }
@@ -69,6 +83,10 @@ public class Score {
     
     public void setStudentCode(String studentCode) {
         this.studentCode = studentCode;
+    }
+
+    public void setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
     }
     
     public void setSubjectName(String subjectName) {
