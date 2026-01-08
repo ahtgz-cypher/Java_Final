@@ -65,6 +65,35 @@ public class StudentDAO {
         }
         return Optional.empty();
     }
+
+//dung cho studentpage
+    public static Optional<Student> getStudentByUserId(int userId) {
+        String sql = "SELECT * FROM students WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                Student student = new Student(
+                    rs.getInt("student_id"),
+                    rs.getInt("user_id"),
+                    rs.getString("full_name"),
+                    rs.getString("student_code"),
+                    rs.getDate("dob")
+                );
+                return Optional.of(student);
+            }
+        } catch (SQLException e) {
+            System.err.println("✗ Lỗi lấy sinh viên theo user_id: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+
     
     // ===== LẤY THÔNG TIN SINH VIÊN THEO MÃ SINH VIÊN =====
     public static Optional<Student> getStudentByCode(String studentCode) {
