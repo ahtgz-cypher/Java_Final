@@ -50,10 +50,11 @@ public class ScoreDAO {
     
     // ===== LẤY ĐIỂM CỦA MỘT SINH VIÊN TRONG MỘT MÔN =====
     public static Optional<Score> getScore(int studentId, int subjectId) {
-        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name " +
+        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name, su.credit, t.full_name AS teacher_name " +
                      "FROM scores sc " +
                      "JOIN students st ON sc.student_id = st.student_id " +
                      "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                     "LEFT JOIN teachers t ON su.teacher_id = t.teacher_id " +
                      "WHERE sc.student_id = ? AND sc.subject_id = ?";
         
         try (Connection conn = DBConnection.getConnection();
@@ -71,8 +72,10 @@ public class ScoreDAO {
                     rs.getDouble("score"),
                     rs.getString("full_name"),
                     rs.getString("student_code"),
-                    rs.getString("subject_name")
+                    rs.getString("subject_name"),
+                    rs.getString("teacher_name")
                 );
+                score.setCredit(rs.getInt("credit"));
                 return Optional.of(score);
             }
         } catch (SQLException e) {
@@ -85,10 +88,11 @@ public class ScoreDAO {
     // ===== LẤY TẤT CẢ ĐIỂM CỦA MỘT SINH VIÊN =====
     public static List<Score> getScoresByStudent(int studentId) {
         List<Score> scores = new ArrayList<>();
-        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name " +
+        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name, su.credit, t.full_name AS teacher_name " +
                      "FROM scores sc " +
                      "JOIN students st ON sc.student_id = st.student_id " +
                      "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                     "LEFT JOIN teachers t ON su.teacher_id = t.teacher_id " +
                      "WHERE sc.student_id = ?";
         
         try (Connection conn = DBConnection.getConnection();
@@ -105,8 +109,10 @@ public class ScoreDAO {
                     rs.getDouble("score"),
                     rs.getString("full_name"),
                     rs.getString("student_code"),
-                    rs.getString("subject_name")
+                    rs.getString("subject_name"),
+                    rs.getString("teacher_name")
                 );
+                score.setCredit(rs.getInt("credit"));
                 scores.add(score);
             }
         } catch (Exception e) {
@@ -119,10 +125,11 @@ public class ScoreDAO {
     // ===== LẤY TẤT CẢ ĐIỂM CỦA MỘT MÔN HỌC =====
     public static List<Score> getScoresBySubject(int subjectId) {
         List<Score> scores = new ArrayList<>();
-        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name " +
+        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name, su.credit, t.full_name AS teacher_name " +
                      "FROM scores sc " +
                      "JOIN students st ON sc.student_id = st.student_id " +
                      "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                     "LEFT JOIN teachers t ON su.teacher_id = t.teacher_id " +
                      "WHERE sc.subject_id = ? " +
                      "ORDER BY st.student_code";
         
@@ -140,8 +147,10 @@ public class ScoreDAO {
                     rs.getDouble("score"),
                     rs.getString("full_name"),
                     rs.getString("student_code"),
-                    rs.getString("subject_name")
+                    rs.getString("subject_name"),
+                    rs.getString("teacher_name")
                 );
+                score.setCredit(rs.getInt("credit"));
                 scores.add(score);
             }
         } catch (Exception e) {
@@ -154,10 +163,11 @@ public class ScoreDAO {
     // ===== LẤY TẤT CẢ ĐIỂM =====
     public static List<Score> getAllScores() {
         List<Score> scores = new ArrayList<>();
-        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name " +
+        String sql = "SELECT sc.*, st.full_name, st.student_code, su.subject_name, su.credit, t.full_name AS teacher_name " +
                      "FROM scores sc " +
                      "JOIN students st ON sc.student_id = st.student_id " +
                      "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                     "LEFT JOIN teachers t ON su.teacher_id = t.teacher_id " +
                      "ORDER BY st.student_code, su.subject_name";
         
         try (Connection conn = DBConnection.getConnection();
@@ -172,8 +182,10 @@ public class ScoreDAO {
                     rs.getDouble("score"),
                     rs.getString("full_name"),
                     rs.getString("student_code"),
-                    rs.getString("subject_name")
+                    rs.getString("subject_name"),
+                    rs.getString("teacher_name")
                 );
+                score.setCredit(rs.getInt("credit"));
                 scores.add(score);
             }
         } catch (SQLException e) {
@@ -201,4 +213,34 @@ public class ScoreDAO {
             return false;
         }
     }
+
+//GPA
+      public static Optional<Double> calculateGpaByCredits(int studentId) {
+        String sql = "SELECT SUM(sc.score * su.credit) / SUM(su.credit) AS gpa " +
+                    "FROM scores sc " +
+                    "JOIN subjects su ON sc.subject_id = su.subject_id " +
+                    "LEFT JOIN teachers t ON su.teacher_id = t.teacher_id " +
+                    "WHERE sc.student_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, studentId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                double gpa = rs.getDouble("gpa");
+                if (rs.wasNull()) return Optional.empty();
+                return Optional.of(gpa);
+            }
+        } catch (SQLException e) {
+            System.err.println("✗ Lỗi tính GPA theo tín chỉ: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+ 
+
+    
+    
 }
