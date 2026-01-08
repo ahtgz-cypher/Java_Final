@@ -10,9 +10,11 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.text.ParseException;
+import javax.swing.text.MaskFormatter;
 
 /**
- * AdminMainFrame - Trang quản trị dành cho Admin
+ *
  * 
  * Chức năng:
  * - Thêm sinh viên mới vào database
@@ -20,11 +22,9 @@ import java.util.List;
  * - Xem danh sách sinh viên từ database
  * - Xem danh sách giáo viên từ database
  * 
- * Lưu ý: Dữ liệu được lưu trực tiếp vào MySQL database thông qua DBConnection
  */
 public class adminPage extends JFrame {
     
-    // ==================== CÁC THÀNH PHẦN GIAO DIỆN ====================
     private JPanel mainPanel;              // Panel chính chứa các card
     private CardLayout cardLayout;         // Layout để chuyển đổi giữa các panel
     
@@ -229,7 +229,18 @@ public class adminPage extends JFrame {
         // Ngày sinh (dob trong database)
         gbc.gridx = 0; gbc.gridy = 2;
         formPanel.add(new JLabel("Ngày Sinh (YYYY-MM-DD):"), gbc);
-        JTextField txtDob = new JTextField(20);
+        JFormattedTextField txtDob;
+        try {
+            MaskFormatter dateFormatter = new MaskFormatter("####-##-##");
+            dateFormatter.setPlaceholderCharacter('_');
+            txtDob = new JFormattedTextField(dateFormatter);
+            txtDob.setColumns(20);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            txtDob = new JFormattedTextField();
+            txtDob.setColumns(20);
+        }
+        final JFormattedTextField finalTxtDob = txtDob;
         gbc.gridx = 1;
         formPanel.add(txtDob, gbc);
         
@@ -243,8 +254,8 @@ public class adminPage extends JFrame {
         // Password mặc định
         gbc.gridx = 0; gbc.gridy = 4;
         formPanel.add(new JLabel("Password:"), gbc);
-        JPasswordField txtPassword = new JPasswordField(20);
-        txtPassword.setText("123456"); // Password mặc định
+        JTextField txtPassword = new JTextField(20);
+        
         gbc.gridx = 1;
         formPanel.add(txtPassword, gbc);
         
@@ -252,14 +263,14 @@ public class adminPage extends JFrame {
         JPanel buttonPanel = new JPanel();
         JButton btnAdd = new JButton("Thêm Sinh Viên");
         btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
-        btnAdd.setPreferredSize(new Dimension(150, 40));
+        btnAdd.setPreferredSize(new Dimension(160, 40));
         
         btnAdd.addActionListener(e -> {
             String studentCode = txtStudentCode.getText().trim();
             String fullName = txtStudentName.getText().trim();
-            String dob = txtDob.getText().trim();
+            String dob = finalTxtDob.getText().replace("_", "").trim();
             String username = txtUsername.getText().trim();
-            String password = new String(txtPassword.getPassword());
+            String password = txtPassword.getText();
             
             // Kiểm tra dữ liệu đầu vào
             if (studentCode.isEmpty() || fullName.isEmpty() || dob.isEmpty() || 
@@ -277,7 +288,7 @@ public class adminPage extends JFrame {
                 // Xóa form sau khi thêm thành công
                 txtStudentCode.setText("");
                 txtStudentName.setText("");
-                txtDob.setText("");
+                finalTxtDob.setValue(null);
                 txtUsername.setText("");
                 txtPassword.setText("123456");
             } else {
@@ -313,41 +324,102 @@ public class adminPage extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
         
         // Tên giáo viên (full_name trong database)
         gbc.gridx = 0; gbc.gridy = 0;
+        gbc.weightx = 0.0;
         formPanel.add(new JLabel("Tên Giáo Viên:"), gbc);
         JTextField txtTeacherName = new JTextField(20);
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
         formPanel.add(txtTeacherName, gbc);
         
         // Username để đăng nhập
         gbc.gridx = 0; gbc.gridy = 1;
+        gbc.weightx = 0.0;
         formPanel.add(new JLabel("Username:"), gbc);
         JTextField txtUsername = new JTextField(20);
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
         formPanel.add(txtUsername, gbc);
         
-        // Password mặc định
+        // Password
         gbc.gridx = 0; gbc.gridy = 2;
+        gbc.weightx = 0.0;
         formPanel.add(new JLabel("Password:"), gbc);
-        JPasswordField txtPassword = new JPasswordField(20);
-        txtPassword.setText("123456"); // Password mặc định
+        JTextField txtPassword = new JTextField(20);
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
         formPanel.add(txtPassword, gbc);
         
-        // Môn học phụ trách (mỗi môn trên một dòng)
-        // Sẽ lưu vào bảng subjects với teacher_id tương ứng
+        // Môn học phụ trách 
         gbc.gridx = 0; gbc.gridy = 3;
         formPanel.add(new JLabel("Môn Học Phụ Trách:"), gbc);
+        
+        // Panel chứa bảng môn học và các nút điều khiển
         JPanel subjectPanel = new JPanel(new BorderLayout());
-        JTextArea txtSubjects = new JTextArea(5, 20);
-        txtSubjects.setLineWrap(true);
-        txtSubjects.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(txtSubjects);
-        subjectPanel.add(scrollPane, BorderLayout.CENTER);
-        JLabel hintLabel = new JLabel("<html><i>(Mỗi môn học trên một dòng, format: Tên môn - Số tín chỉ)</i></html>");
-        subjectPanel.add(hintLabel, BorderLayout.SOUTH);
+        
+        // Bảng hiển thị danh sách môn học
+        String[] subjectColumns = {"Tên Môn Học", "Số Tín Chỉ"};
+        DefaultTableModel subjectTableModel = new DefaultTableModel(subjectColumns, 0) {
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 1) return Integer.class;
+                return String.class;
+            }
+        };
+        JTable subjectTable = new JTable(subjectTableModel);
+        subjectTable.setRowHeight(25);
+        JScrollPane subjectScrollPane = new JScrollPane(subjectTable);
+        subjectScrollPane.setPreferredSize(new Dimension(300, 150));
+        
+        // Panel nhập liệu môn học mới
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel lblSubjectName = new JLabel("Tên Môn:");
+        JTextField txtSubjectName = new JTextField(15);
+        JLabel lblCredit = new JLabel("Số Tín Chỉ:");
+        JSpinner spnCredit = new JSpinner(new SpinnerNumberModel(3, 1, 10, 1));
+        spnCredit.setPreferredSize(new Dimension(60, 25));
+        JButton btnAddSubject = new JButton("Thêm Môn");
+        JButton btnRemoveSubject = new JButton("Xóa Môn");
+        
+        inputPanel.add(lblSubjectName);
+        inputPanel.add(txtSubjectName);
+        inputPanel.add(lblCredit);
+        inputPanel.add(spnCredit);
+        inputPanel.add(btnAddSubject);
+        inputPanel.add(btnRemoveSubject);
+        
+        // Sự kiện thêm môn học
+        btnAddSubject.addActionListener(e -> {
+            String subjectName = txtSubjectName.getText().trim();
+            if (subjectName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên môn học!", 
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            int credit = (Integer) spnCredit.getValue();
+            subjectTableModel.addRow(new Object[]{subjectName, credit});
+            txtSubjectName.setText("");
+            spnCredit.setValue(3);
+        });
+        
+        // Sự kiện xóa môn học
+        btnRemoveSubject.addActionListener(e -> {
+            int selectedRow = subjectTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                subjectTableModel.removeRow(selectedRow);
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn môn học cần xóa!", 
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        
+        subjectPanel.add(subjectScrollPane, BorderLayout.CENTER);
+        subjectPanel.add(inputPanel, BorderLayout.SOUTH);
+        
         gbc.gridx = 1;
         formPanel.add(subjectPanel, gbc);
         
@@ -355,25 +427,32 @@ public class adminPage extends JFrame {
         JPanel buttonPanel = new JPanel();
         JButton btnAdd = new JButton("Thêm Giáo Viên");
         btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
-        btnAdd.setPreferredSize(new Dimension(150, 40));
+        btnAdd.setPreferredSize(new Dimension(160, 40));
         
         btnAdd.addActionListener(e -> {
             String fullName = txtTeacherName.getText().trim();
             String username = txtUsername.getText().trim();
-            String password = new String(txtPassword.getPassword());
-            String subjectsText = txtSubjects.getText().trim();
+            String password = txtPassword.getText();
             
             // Kiểm tra dữ liệu đầu vào
-            if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || subjectsText.isEmpty()) {
+            if (fullName.isEmpty() || username.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            // Parse danh sách môn học (format: "Tên môn - Số tín chỉ")
-            List<SubjectInfo> subjectList = parseSubjects(subjectsText);
+            // Lấy danh sách môn học từ bảng
+            List<SubjectInfo> subjectList = new ArrayList<>();
+            for (int i = 0; i < subjectTableModel.getRowCount(); i++) {
+                String name = (String) subjectTableModel.getValueAt(i, 0);
+                Integer credit = (Integer) subjectTableModel.getValueAt(i, 1);
+                if (name != null && !name.trim().isEmpty()) {
+                    subjectList.add(new SubjectInfo(name.trim(), credit));
+                }
+            }
+            
             if (subjectList.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập ít nhất một môn học!", 
+                JOptionPane.showMessageDialog(this, "Vui lòng thêm ít nhất một môn học!", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -387,7 +466,9 @@ public class adminPage extends JFrame {
                 txtTeacherName.setText("");
                 txtUsername.setText("");
                 txtPassword.setText("123456");
-                txtSubjects.setText("");
+                subjectTableModel.setRowCount(0);
+                txtSubjectName.setText("");
+                spnCredit.setValue(3);
             } else {
                 JOptionPane.showMessageDialog(this, "Thêm giáo viên thất bại! Kiểm tra lại thông tin.", 
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -415,7 +496,7 @@ public class adminPage extends JFrame {
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         
-        // Tạo bảng với các cột phù hợp với database
+        // Tạo bảng với các cột phù hợp với database (thêm cột ID ẩn)
         String[] columns = {"Mã SV", "Tên Sinh Viên", "Ngày Sinh", "Username"};
         studentTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -430,8 +511,45 @@ public class adminPage extends JFrame {
         studentTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         JScrollPane scrollPane = new JScrollPane(studentTable);
         
+        // Panel chứa nút xóa
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnDelete = new JButton("Xóa Sinh Viên");
+        btnDelete.setFont(new Font("Arial", Font.BOLD, 14));
+        btnDelete.setPreferredSize(new Dimension(150, 35));
+        btnDelete.setForeground(Color.RED);
+        
+        btnDelete.addActionListener(e -> {
+            int selectedRow = studentTable.getSelectedRow();
+            if (selectedRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn sinh viên cần xóa!", 
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            String studentCode = (String) studentTableModel.getValueAt(selectedRow, 0);
+            String studentName = (String) studentTableModel.getValueAt(selectedRow, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Bạn có chắc chắn muốn xóa sinh viên: " + studentName + " (Mã: " + studentCode + ")?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (deleteStudentFromDatabase(studentCode)) {
+                    JOptionPane.showMessageDialog(this, "Xóa sinh viên thành công!", 
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    refreshStudentTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa sinh viên thất bại!", 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        buttonPanel.add(btnDelete);
+        
         panel.add(title, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         return panel;
@@ -463,8 +581,45 @@ public class adminPage extends JFrame {
         teacherTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
         JScrollPane scrollPane = new JScrollPane(teacherTable);
         
+        // Panel chứa nút xóa
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnDelete = new JButton("Xóa Giáo Viên");
+        btnDelete.setFont(new Font("Arial", Font.BOLD, 14));
+        btnDelete.setPreferredSize(new Dimension(150, 35));
+        btnDelete.setForeground(Color.RED);
+        
+        btnDelete.addActionListener(e -> {
+            int selectedRow = teacherTable.getSelectedRow();
+            if (selectedRow < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn giáo viên cần xóa!", 
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            String teacherName = (String) teacherTableModel.getValueAt(selectedRow, 0);
+            String username = (String) teacherTableModel.getValueAt(selectedRow, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Bạn có chắc chắn muốn xóa giáo viên: " + teacherName + " (Username: " + username + ")?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (deleteTeacherFromDatabase(username)) {
+                    JOptionPane.showMessageDialog(this, "Xóa giáo viên thành công!", 
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    refreshTeacherTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa giáo viên thất bại!", 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        buttonPanel.add(btnDelete);
+        
         panel.add(title, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         return panel;
@@ -761,40 +916,146 @@ public class adminPage extends JFrame {
     }
     
     /**
-     * Parse chuỗi môn học thành danh sách SubjectInfo
-     * Format: "Tên môn - Số tín chỉ" (mỗi môn trên một dòng)
+     * Xóa sinh viên khỏi database
+     * Xóa từ 2 bảng: students và users
      * 
-     * @param subjectsText Chuỗi chứa danh sách môn học
-     * @return Danh sách SubjectInfo
+     * @param studentCode Mã sinh viên cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
      */
-    private List<SubjectInfo> parseSubjects(String subjectsText) {
-        List<SubjectInfo> subjectList = new ArrayList<>();
-        String[] lines = subjectsText.split("\\n");
-        
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty()) continue;
+    private boolean deleteStudentFromDatabase(String studentCode) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // Bắt đầu transaction
             
-            // Format: "Tên môn - Số tín chỉ" hoặc chỉ "Tên môn" (mặc định 3 tín chỉ)
-            if (line.contains("-")) {
-                String[] parts = line.split("-");
-                if (parts.length >= 2) {
-                    String name = parts[0].trim();
-                    try {
-                        int credit = Integer.parseInt(parts[1].trim());
-                        subjectList.add(new SubjectInfo(name, credit));
-                    } catch (NumberFormatException e) {
-                        // Nếu không parse được số, mặc định 3 tín chỉ
-                        subjectList.add(new SubjectInfo(name, 3));
-                    }
+            // Bước 1: Lấy user_id từ student_code
+            int userId = -1;
+            String getUserIdSql = "SELECT user_id FROM students WHERE student_code = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(getUserIdSql)) {
+                stmt.setString(1, studentCode);
+                ResultSet rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy sinh viên với mã: " + studentCode, 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return false;
                 }
-            } else {
-                // Chỉ có tên môn, mặc định 3 tín chỉ
-                subjectList.add(new SubjectInfo(line, 3));
+                userId = rs.getInt("user_id");
+            }
+            
+            // Bước 2: Xóa từ bảng students
+            String deleteStudentSql = "DELETE FROM students WHERE student_code = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteStudentSql)) {
+                stmt.setString(1, studentCode);
+                stmt.executeUpdate();
+            }
+            
+            // Bước 3: Xóa từ bảng users
+            String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteUserSql)) {
+                stmt.setInt(1, userId);
+                stmt.executeUpdate();
+            }
+            
+            conn.commit(); // Commit transaction
+            return true;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback nếu có lỗi
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
-        
-        return subjectList;
+    }
+    
+    /**
+     * Xóa giáo viên khỏi database
+     * Xóa từ 3 bảng: subjects, teachers và users
+     * 
+     * @param username Username của giáo viên cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    private boolean deleteTeacherFromDatabase(String username) {
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // Bắt đầu transaction
+            
+            // Bước 1: Lấy user_id và teacher_id từ username
+            int userId = -1;
+            int teacherId = -1;
+            String getIdsSql = "SELECT u.user_id, t.teacher_id FROM users u " +
+                              "JOIN teachers t ON u.user_id = t.user_id " +
+                              "WHERE u.username = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(getIdsSql)) {
+                stmt.setString(1, username);
+                ResultSet rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy giáo viên với username: " + username, 
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                userId = rs.getInt("user_id");
+                teacherId = rs.getInt("teacher_id");
+            }
+            
+            // Bước 2: Xóa từ bảng subjects
+            String deleteSubjectsSql = "DELETE FROM subjects WHERE teacher_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteSubjectsSql)) {
+                stmt.setInt(1, teacherId);
+                stmt.executeUpdate();
+            }
+            
+            // Bước 3: Xóa từ bảng teachers
+            String deleteTeacherSql = "DELETE FROM teachers WHERE teacher_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteTeacherSql)) {
+                stmt.setInt(1, teacherId);
+                stmt.executeUpdate();
+            }
+            
+            // Bước 4: Xóa từ bảng users
+            String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteUserSql)) {
+                stmt.setInt(1, userId);
+                stmt.executeUpdate();
+            }
+            
+            conn.commit(); // Commit transaction
+            return true;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback nếu có lỗi
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
     
     // ==================== CÁC LỚP HỖ TRỢ ====================
@@ -811,4 +1072,12 @@ public class adminPage extends JFrame {
             this.credit = credit;
         }
     }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            adminPage frame = new adminPage();
+            frame.setVisible(true);
+        });
+    }
 }
+
