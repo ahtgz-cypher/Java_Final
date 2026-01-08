@@ -98,8 +98,8 @@ public class StudentPage extends JFrame {
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
 
-        lblHeaderTitle = new JLabel("...");
-        lblHeaderTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblHeaderTitle = new JLabel("Chào mừng bạn!");
+        lblHeaderTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblHeaderTitle.setForeground(new Color(255, 255, 255));
 
         JLabel subtitle = new JLabel("Công Phu Đủ Bền Trái Ngọt Ắt Sinh");
