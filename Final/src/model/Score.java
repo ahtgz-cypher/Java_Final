@@ -29,6 +29,7 @@ public class Score {
         this.studentName = studentName;
         this.studentCode = studentCode;
         this.subjectName = subjectName;
+        this.teacherName = teacherName;
     }
     
     // Getters
