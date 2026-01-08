@@ -149,4 +149,95 @@ public class ReportUtil {
         }
         return min;
     }
+
+
+    //PDF
+    public static boolean exportScoresToPDF(String filePath, String title, List<String> lines) {
+    try {
+        StringBuilder content = new StringBuilder();
+        
+        content.append("BT\n");
+        content.append("/F1 12 Tf\n");
+        int y = 760;
+        content.append(String.format("1 0 0 1 50 %d Tm\n", y));
+        content.append(escapePdfText(title)).append(" Tj\n");
+        content.append("T*\n");
+        for (String line : lines) {
+            if (line == null) line = "";
+            
+            content.append(String.format("1 0 0 1 50 %d Tm\n", y -= 14));
+            content.append(escapePdfText(line)).append(" Tj\n");
+            if (y < 60) break; 
+        }
+        content.append("ET\n");
+
+        byte[] streamBytes = content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String header = "%PDF-1.4\n";
+        String obj1 = "1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n";
+        String obj2 = "2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n";
+        String obj3 = "3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + "/Resources<< /Font<< /F1 4 0 R >> >> /Contents 5 0 R >>endobj\n";
+        String obj4 = "4 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n";
+        String obj5 = "5 0 obj<< /Length " + streamBytes.length + " >>stream\n";
+
+        
+        java.util.List<byte[]> parts = new java.util.ArrayList<>();
+        parts.add(header.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(obj1.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(obj2.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(obj3.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(obj4.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(obj5.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        parts.add(streamBytes);
+        parts.add("\nendstream\nendobj\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+
+        int offset = 0;
+        java.util.List<Integer> xref = new java.util.ArrayList<>();
+        xref.add(0); 
+        for (int i = 1; i <= 5; i++) xref.add(0);
+
+        
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        baos.write(parts.get(0)); offset += parts.get(0).length;
+
+        
+        for (int obj = 1; obj <= 4; obj++) {
+            xref.set(obj, offset);
+            byte[] b = parts.get(obj);
+            baos.write(b); offset += b.length;
+        }
+        
+        xref.set(5, offset);
+        baos.write(parts.get(5)); offset += parts.get(5).length;
+        baos.write(parts.get(6)); offset += parts.get(6).length;
+        baos.write(parts.get(7)); offset += parts.get(7).length;
+
+        int xrefStart = offset;
+        StringBuilder xrefSb = new StringBuilder();
+        xrefSb.append("xref\n0 6\n");
+        xrefSb.append(String.format("%010d 65535 f \n", 0));
+        for (int i = 1; i <= 5; i++) {
+            xrefSb.append(String.format("%010d 00000 n \n", xref.get(i)));
+        }
+        String trailer = "trailer<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xrefStart + "\n%%EOF\n";
+
+        baos.write(xrefSb.toString().getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        baos.write(trailer.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+
+        java.nio.file.Files.write(java.nio.file.Paths.get(filePath), baos.toByteArray());
+        return true;
+    } catch (Exception e) {
+        System.out.println("✗ Lỗi xuất PDF: " + e.getMessage());
+        return false;
+    }
+}
+
+private static String escapePdfText(String s) {
+    if (s == null) return "()";
+    
+    s = s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
+    return "(" + s + ")";
+}
+
+    
 }
