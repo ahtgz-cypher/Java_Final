@@ -150,7 +150,8 @@ public class login extends JFrame {
 			teacherPage.setVisible(true);
 			break;
 		case 3: // STUDENT
-			JOptionPane.showMessageDialog(this, "Trang sinh viên đang được phát triển!");
+			StudentPage studentPage = new StudentPage(user.getUserId());
+			studentPage.setVisible(true);
 			break;
 		default:
 			JOptionPane.showMessageDialog(this, "Role không hợp lệ!");
