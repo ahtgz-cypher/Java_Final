@@ -21,7 +21,7 @@ public class Score {
     }
     
     public Score(int scoreId, int studentId, int subjectId, double score, 
-                 String studentName, String studentCode, String subjectName) {
+                 String studentName, String studentCode, String subjectName, String teacherName) {
         this.scoreId = scoreId;
         this.studentId = studentId;
         this.subjectId = subjectId;
