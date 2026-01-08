@@ -389,7 +389,7 @@ private void refreshAll() {
             r.scores = ScoreDAO.getScoresByStudent(r.student.getStudentId());
 
             java.util.Optional<Double> gpaOpt = ScoreDAO.calculateGpaByCredits(r.student.getStudentId());
-            if (gpaOpt.isEmpty()) gpaOpt = ScoreDAO.calculateGpaSimple(r.student.getStudentId());
+            
             r.gpa = gpaOpt.orElse(null);
 
             
@@ -501,9 +501,7 @@ private void loadUser() {
         if (currentStudent == null) return;
 
         Optional<Double> gpaOpt = ScoreDAO.calculateGpaByCredits(currentStudent.getStudentId());
-        if (gpaOpt.isEmpty()) {
-            gpaOpt = ScoreDAO.calculateGpaSimple(currentStudent.getStudentId());
-        }
+        
         lblGpa.setText(gpaOpt.map(df::format).orElse("--"));
 
         applyFilter();
