@@ -317,16 +317,16 @@ public class StudentPage extends JFrame {
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
     actions.setOpaque(false);
 
-    btnRefresh = makePillButton("⟳ Refresh", new Color(255, 255, 255), new Color(46, 134, 193));
+    btnRefresh = makePillButton("Refresh", new Color(255, 255, 255), new Color(46, 134, 193));
     btnRefresh.setActionCommand("refresh");
 
-    btnExportPdf = makePillButton("⬇ Export PDF", new Color(255, 255, 255), new Color(39, 174, 96));
+    btnExportPdf = makePillButton("Export PDF", new Color(255, 255, 255), new Color(39, 174, 96));
     btnExportPdf.setActionCommand("exportPdf");
 
-    btnChangePassword = makePillButton("🔒 Đổi MK", new Color(255, 255, 255), new Color(243, 156, 18));
+    btnChangePassword = makePillButton("Đổi MK", new Color(255, 255, 255), new Color(243, 156, 18));
     btnChangePassword.setActionCommand("changePassword");
 
-    btnLogout = makePillButton("↩ Logout", new Color(255, 255, 255), new Color(192, 57, 43));
+    btnLogout = makePillButton("Logout", new Color(255, 255, 255), new Color(192, 57, 43));
     btnLogout.setActionCommand("logout");
 
     actions.add(btnRefresh);
