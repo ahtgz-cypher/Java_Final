@@ -379,19 +379,19 @@ private void refreshAll() {
 
             FetchResult r = new FetchResult();
 
-            
+            // 1. Lấy Student
             r.student = StudentDAO.getStudentByUserId(userId)
                     .orElseThrow(() -> new IllegalStateException("Không tìm thấy sinh viên tương ứng với user_id=" + userId));
 
-            
+            // 2. Lấy User
             r.user = UserDAO.getUserById(userId).orElse(null);
 
-            
+            // 3. Lấy điểm
             r.scores = ScoreDAO.getScoresByStudent(r.student.getStudentId());
 
-            java.util.Optional<Double> gpaOpt = ScoreDAO.calculateGpaByCredits(r.student.getStudentId());
-            
-            r.gpa = gpaOpt.orElse(null);
+            // --- SỬA Ở ĐÂY: Tính GPA hệ 4 thay vì lấy hệ 10 từ DB ---
+            r.gpa = calculateGpa4(r.scores); 
+            // --------------------------------------------------------
 
             
             int tc = 0;
@@ -420,7 +420,10 @@ private void refreshAll() {
                 }
 
                 lblUsername.setText("Tài khoản: " + (currentUser == null ? "--" : safe(currentUser.getUsername())));
-                lblGpa.setText(r.gpa == null ? "--" : df.format(r.gpa));
+                
+                // Hiển thị GPA hệ 4
+                lblGpa.setText(r.gpa == null ? "--" : df.format(r.gpa) + " / 4.0");
+                
                 if (lblTotalCredits != null) lblTotalCredits.setText("Tổng TC: " + r.totalCredits);
 
                 // Table
@@ -501,6 +504,7 @@ private void loadUser() {
     private void loadScoresAndGpa() {
         if (currentStudent == null) return;
 
+        // Lưu ý: Đoạn này nếu dùng lại thì cũng phải sửa thành hệ 4, nhưng refreshAll() là chính
         Optional<Double> gpaOpt = ScoreDAO.calculateGpaByCredits(currentStudent.getStudentId());
         
         lblGpa.setText(gpaOpt.map(df::format).orElse("--"));
@@ -871,5 +875,36 @@ private double parseDoubleSafe(Object o) {
 
     private void loadStudentData() {
         refreshAll();
+    }
+
+    // ==========================================================
+    // HÀM TÍNH GPA HỆ 4 (THÊM MỚI)
+    // ==========================================================
+
+    private double convertToScale4(double score10) {
+        if (score10 >= 8.5) return 4.0; // A
+        if (score10 >= 7.0) return 3.0; // B
+        if (score10 >= 5.0) return 2.0; // C
+        if (score10 >= 4.0) return 1.0; // D
+        return 0.0;                     // F
+    }
+
+    private double calculateGpa4(List<Score> scores) {
+        if (scores == null || scores.isEmpty()) return 0.0;
+
+        double totalPoints = 0;
+        int totalCredits = 0;
+
+        for (Score s : scores) {
+            int credit = Math.max(0, s.getCredit());
+            if (credit > 0) {
+                double score4 = convertToScale4(s.getScore());
+                totalPoints += score4 * credit;
+                totalCredits += credit;
+            }
+        }
+
+        if (totalCredits == 0) return 0.0;
+        return totalPoints / totalCredits;
     }
 }
